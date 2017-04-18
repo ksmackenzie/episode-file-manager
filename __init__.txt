@@ -1,0 +1,229 @@
+# original __init__ file (wip) before splitting project into modules
+
+
+import re, os, time
+from pytvdbapi import api
+# from os.path import splitext
+
+TVDBAPI_KEY = "4452E85C22F29289"  # pytvdbapi key
+TVDB = api.TVDB(TVDBAPI_KEY)
+
+# regex patterns identifying files as episodes
+SDDEDD = re.compile(r"s\d{1,2}.*e\d{1,2}", re.I)  # s1e01, s23e3, S03E04 etc
+DXD = re.compile(r"\d{1,2}[x|-]\d{1,2}", re.I)  # 1x12, 13-03 etc
+DDDD = re.compile(r"\d{3,4}")  # 106, 0207, 723 etc
+LONGFORM = re.compile(  # Season 2 Episode 5, season 12 episode 03, etc
+    r"season[\s|\.]\d{1,2}[\s|\.]episode[\s|\.]\d{1,2}", re.I)
+
+# all episode identifiers
+EP_PATTERNS = [SDDEDD, DXD, DDDD, LONGFORM]
+
+# filename extensions for video files
+VIDEO_FN_EXTS = tuple('avi flv m4v mkv mov mp4 mpg vob wmv'.split())
+DISALLOWED_CHARS = set('\/:*?"<>')
+
+# ggggithub test
+
+def timestamp():
+    """
+    timestamp for log files
+
+    :return: current date and time in the form YYYYMMDD_HHMM
+    """
+    return time.strftime('%Y%m%d_%H%M')
+
+
+# # # OPERATIONS ON SHOW FOLDERS IN MAIN FOLDER # # #
+
+def get_tvshow(dir):
+    """
+    checks the given directory name against tv shows in thetvdb,
+    adds directory & tvdb show object to dirs_to_shows dict
+
+    :param dir: name of directory containing episode files
+    :param dirs_to_shows: dictionary mapping show directories to show objects
+    """
+
+    # TODO: fix greedy matching
+    shows = TVDB.search(dir, 'en')
+    try:
+        assert len(shows) == 1  # 1 matching show found
+        return shows[0]
+
+    except AssertionError:
+        if len(shows) > 1:  # more than one matching show found
+            show = select_tvshow(dir, shows)
+            return show
+
+        else:  # no matching shows found
+            print("No series named \"{}\" was found, skipping this folder."
+                  .format(dir))
+            return None
+
+
+def select_tvshow(folder, shows):
+    """
+    Handles cases where more than one match for the directory name was found
+    in the tvdb
+
+    :param shows: list of show objects
+    :return: show selected by user, else null if user opts to skip this dir
+    """
+
+    # display possible matches for show
+    print("\nMore than one match found for {}:".format(folder))
+    for i, show in enumerate(shows):
+        print("\t{}) {}".format(i + 1, show.SeriesName))
+
+    prompt = "\nEnter the number of the correct show as listed, or s to skip: "
+
+    # loop until valid selection is entered
+    while True:
+        response = input(prompt)
+        try:
+            skipping = response.lower().startswith('s')
+            in_range = int(response)-1 in range(len(shows))
+            valid = in_range or skipping
+
+            if not valid:
+                raise TypeError
+            elif skipping:
+                return None
+            else:
+                return shows[int(response) - 1]
+
+        except (ValueError, IndexError, TypeError):
+                print("Error, invalid response:", response)
+
+
+
+
+def folder_show_matcher(dirs):
+    """
+    generator for returning 2-tuples of directories with shows
+
+    :param dirs:
+    :return 2-tuples pairing directories to shows, where a valid show for the
+    directory can be determined:
+    """
+    for dir in dirs:
+        show = get_tvshow(dir)
+        if dir[0] not in ' _.' and show:
+            yield dir, show
+
+
+
+# # # OPERATIONS ON FILES/FOLDERS IN SHOW FOLDERS # # #
+
+"""
+    navigating a show directory
+
+        dir          file
+      /  |  \        /   \
+    epd seas other epf  other
+   / |    \___________
+ epf other |   |      \
+          epf  epd    other
+              /   \
+             epf  other
+
+"""
+
+# boolean checks for file types
+
+def is_video(fn):
+    # return splitext(fn)[1:] in VIDEO_FN_EXTS
+    return fn.endswith(VIDEO_FN_EXTS)
+
+def is_episode(fn, season=None):
+    return is_video(fn) and contains_epdata(fn, season)
+
+# todo: refactor to return match? Or seas/ep tuple?
+def contains_epdata(fn, season=None):
+    """
+    Checks for substrings identifying fn as an episode.
+
+    :param season:
+        If the file is in a season folder, season number may not
+    be embedded in the filename. In such cases the season number is passed in.
+    :return:
+        Whether episode data was deteceted in the filename
+    """
+    for pattern in EP_PATTERNS:
+        if pattern.search(fn):
+            # season-ep id found in filename
+            return True
+
+    if season:
+        return is_video(fn) and any(char.isdigit() for char in splitext(fn)[0])
+    return False
+
+
+def remove_show_name(fn, show):
+    """
+    Removes the show name from an epfile.
+
+    Primarily for use renaming epfiles in season folders. Such files will
+    often not have season identifiers in them, and as such episode numbers
+    may be confused with show titles if the show title contains a digits,
+    eg '30 Rock E04.mp4' could be identified as episode 30.
+
+    :param fn: file to be renamed <str>
+    :param show: title of show <str>
+    :return: the file with the show name removed
+    """
+
+    show_re = re.compile(show, re.I)
+
+    if len(show.split()) == 1:
+        return re.sub(show_re, '', fn)
+
+
+def rename_episode(fn):
+    # todo: this function
+    pass
+
+def dirs_to_shows():
+    # get directories in current directory
+    dirs = [x for x in os.listdir(".") if os.path.isdir(x)]
+
+    # generate dict of show directories to show objects
+    return {showdir: tvshow for showdir, tvshow in folder_show_matcher(dirs)}
+
+
+showdirs_dict = dirs_to_shows()
+# scaffold
+print(showdirs_dict)
+
+# successfully displays contents of dirs
+print(os.getcwd()0)
+for showdir, tvshow in showdirs_dict.items():
+    # cwd = os.getcwd()
+
+    # FUCKING HOT MESS! >:[
+    path = os.path.abspath(showdir)
+    os.chdir(path)
+    print("cwd:", os.getcwd())
+
+    print(os.path.abspath(showdir)) # scaffolding
+    print(showdir, tvshow)
+
+
+    for root, dirs, files in os.walk(showdir): # handle_show_dir(show_dir)?
+        for file in files:
+            # rename epfiles
+            pass
+
+        for dir in dirs:
+            # check: is season folder?
+            # if is_season_folder: handle_season_folder(dir, season_num)
+
+            # check: is single ep folder?
+            # if is_single_ep_dir(dir): handle_single_ep_dir(dir)
+            pass
+        # handle season dirs (dirs) - walk, check for sgl ep dirs, and epfiles
+        # handle single ep (dirs)
+
+
+# print(timestamp())
+# print(time.strptime('%Y%d%m_%H%m'))
