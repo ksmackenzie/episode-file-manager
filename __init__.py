@@ -18,20 +18,17 @@ ui.initialise(cwd)
 showdirs_dict = dman.dirs_to_shows(TVDB)
 
 # loop through folders identified as tv series folders
-for folder, show in showdirs_dict.items():
+for show_folder, show in showdirs_dict.items():
 
     # switch working directory to current tv show directory
-    path = os.path.abspath(folder)
-    os.chdir(path)
+    show_dir_path = os.path.abspath(show_folder)
+    os.chdir(show_dir_path)
 
     # loop through each tv show folder
-    for root, dirs, files in os.walk(path):  # handle_show_dir(show_dir)?
-
+    for root, dirs, files in os.walk(show_dir_path):  # handle_show_dir(
+        # show_dir)?
         # handle files
-        for file in files:
-            # rename loose epfiles in root of show folder
-            if fman.is_episode(file):
-                pass
+        ep_files_loose = [f for f in files if fman.is_episode(f)]
 
         # handle directories
         for directory in dirs:
