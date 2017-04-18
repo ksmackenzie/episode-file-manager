@@ -6,7 +6,7 @@ import dirmanager as dman
 import filemanager as fman
 import interface as ui
 
-# git testing
+# git testing again
 
 # pytvdbapi key and instance
 TVDBAPI_KEY = "4452E85C22F29289"
