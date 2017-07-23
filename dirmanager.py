@@ -120,8 +120,10 @@ def is_season(folder, show_name):
 
 
     valid_starts = re.compile(r'(?i)(s|seas|season)?[\s\-._]?\d{1,3}')
+    invalid_contents = re.compile(r'E\d{1,2}',re.I)  # ignore ep folders
     seas_text = re.compile(r'(?i)s?e?a?s?o?n?')
-    return folder.lower().startswith(valid_starts)
+    normd_folder = folder.lower()
+    return normd_folder.startswith(valid_starts)
 
 
 def is_single_episode(folder):

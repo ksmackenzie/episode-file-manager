@@ -1,6 +1,14 @@
 import re
 import os
 
+"""
+module for parsing strings. determine whether they are episodes,
+extract episode/season numbers, etc.
+
+in process of refactoring; currently designed to parse files and folders
+differently, but really there should be no distinction.
+"""
+
 # regex patterns for matching season episode identifiers in filenames
 EP_PATTERNS = (
     re.compile(r's\d{1,2}.*e\d{1,2}', re.I),  # SDDEDD
@@ -77,7 +85,7 @@ def get_seasep_numbers(f, showname):
     :return: tuple(<str>)
         a tuple representing the season and episode numbers
     """
-    #todo: handle qualifiers in showname that may not appear in filename,
+    # todo: handle qualifiers in showname that may not appear in filename,
     # eg '2015', '(US)'
 
     showname_removed = remove_show_name(f, showname)
