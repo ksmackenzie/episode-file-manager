@@ -24,7 +24,7 @@ def get_tvshow(f, tvdb):
         return show if perfect_match(f, show) else ui.check_match(f, show)
 
     except AssertionError:
-        return no_match(f) if len(shows) is 0 else ui.select_tvshow(f, shows)
+        return no_match(f) if len(shows) is 0 else ui.select_tvshow_from_db_matches(f, shows)
 
 
 def folder_show_matcher(folders, shows):

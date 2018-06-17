@@ -1,61 +1,58 @@
+from typing import Optional, List, Dict
+from pytvdbapi.api import Show
 
 
-def initialise(cwd):
+def initialise(cwd: str) -> None:
     """
     Displays intro text and folder being scanned for shows
 
-    :param cwd: current working directory (root folder for shows)
+    :param cwd: current working directory (root folder for show folders)
     :return:  None
     """
     print("\n~*< KM Episode File Manager >*~\n")
     print("Scanning for tv show folders in:\n\t{}\n\n".format(cwd))
 
 
-def select_tvshow(folder, shows):
-    """
-    Handles cases where more than one match for the directory name was found
+def select_tvshow_from_db_matches(folder: str, shows: List[Show]) -> Optional[Show]:
+    """Handles cases where more than one match for the directory name was found
     in the tvdb
+    precondition: len(shows) >= 2
 
-    :param folder: possible show folder <str>
-    :param shows: list of show objects <list(<tvdb.Show>)>
-    :return: show selected by user, else None if user opts to skip this dir
     """
 
     # display possible matches for show
-    print("More than one match found for {}:".format(folder))
+    # todo: make index number a variable instead of plus-one-ing it
+    print(f"More than one match found for {folder}:")
     for i, show in enumerate(shows):
-        print("\t{}) {}".format(i + 1, show.SeriesName))
+        display_index = i + 1
+        print("\t{}) {}".format(display_index, show.SeriesName))
 
+    # user selects number of show
     prompt = "Enter the number of the correct show as listed, or s to skip: "
-
-    # loop until valid selection is entered
-    while True:
+    while True:  # loop until valid response from user
         response = input(prompt)
         skipping = response.lower().startswith('s')
-        if skipping:
+        valid_response = skipping or int(response)
+        if skipping:  # shows aren't relevant to user, move on
             print()
             return None
-
-        try:
-            in_range = int(response)-1 in range(len(shows))
-            if in_range:
+        try:  # check: user selected a valid response other than skip?
+            user_selected_number = int(response) - 1
+            valid_show_by_user = user_selected_number in range(len(shows))
+            if valid_show_by_user:  # return valid show selected by user
+                valid_show = shows[user_selected_number]
                 print()
-                return shows[int(response) - 1]
+                return valid_show
+            else:  # user selected a number, but not in appropriate range
+                raise IndexError
+        except (ValueError, IndexError, TypeError): # handle user fuck ups
+            print(f"Error, invalid response: {response}")
+            print("please try again\n")
 
-            raise IndexError
 
-        except (ValueError, IndexError, TypeError):
-            print("Error, invalid response:", response)
+def check_match(folder: str, show: Show) -> Show:
+    """has user check imperfect match for show & folder"""
 
-
-def check_match(folder, show):
-    """
-    has user check imperfect match for show & folder
-
-    :param show: tvdbapi show object <tvdbapi.Show>
-    :param folder: name of show folder <str>
-    :return: the confirmed correct show, or None
-    """
     text = "An imperfect match for the folder '{}' was found:\n\t{}" \
            "\nIs this the correct show for this folder? (y/n): "
     prompt = text.format(folder, show.SeriesName)
@@ -64,15 +61,12 @@ def check_match(folder, show):
     return show if response[0].lower() == 'y' else None
 
 
-def display_matches(dirs_shows):
-    """
-    displays list of unmatched folders, then list of matched folders
-
+def display_matches(dirs_shows: Dict[str, Show]) -> None:
+    """displays list of unmatched folders, then list of matched folders
     :param dirs_shows: folders in root shows folder mapped to shows
-    :return: None
-    """
+    :return: None"""
+
     print("The following folders will be processed as tv show folders:")
     for folder, show in dirs_shows.items():
         print("\t{}:\n\t\t{}\n".format(folder, show))
     print()
-

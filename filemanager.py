@@ -12,6 +12,7 @@ def is_video(fn):
     # return splitext(fn)[1:] in VIDEO_FN_EXTS
     return fn.endswith(VIDEO_FN_EXTS)
 
+
 def is_episode(fn):
     return is_video(fn) and spars.contains_epdata(fn)
 

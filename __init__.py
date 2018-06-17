@@ -6,6 +6,10 @@ import dirmanager as dman
 import filemanager as fman
 import interface as ui
 
+# test git
+gittt = "gittt"
+git0 = gittt[0]
+
 # pytvdbapi key and instance
 TVDBAPI_KEY = "4452E85C22F29289"
 TVDB = api.TVDB(TVDBAPI_KEY)

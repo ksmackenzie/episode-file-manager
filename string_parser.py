@@ -69,8 +69,10 @@ def contains_epdata(fn, season=None):
         return any(c.isdigit() for c in fn.split('.')[0])
     return False
 
+
 def remove_filename_ext(fn):
     return os.path.splitext(fn)[0]
+
 
 def get_seasep_numbers(f, showname):
     """
